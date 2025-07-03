@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from marshmallow import Schema, post_dump
+from marshmallow import Schema, fields, post_dump, validate
 
 from app.utils import DateTimeUtils
 
@@ -15,3 +15,13 @@ class ActionSchema(Schema):
         if timestamp and isinstance(timestamp, datetime):
             original["timestamp"] = DateTimeUtils.format_utc_timestamp(timestamp)
         return original
+
+
+class ActionQuerySchema(Schema):
+    recent = fields.Boolean(required=False, truthy={"true", "1"}, falsy={"false", "0"})
+    interval = fields.Integer(
+        required=False,
+        strict=False,
+        validate=validate.Range(min=1, error="Interval must be a positive integer"),
+        load_default=15,
+    )

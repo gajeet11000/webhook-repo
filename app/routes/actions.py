@@ -3,23 +3,33 @@ from datetime import datetime, timedelta, timezone
 from flask import Blueprint, jsonify, request
 
 from app import mongo
-from app.schemas.actions import ActionSchema
+from app.schemas.actions import ActionSchema, ActionQuerySchema
 from app.utils import GithubWebhookExtractor
+from marshmallow import ValidationError
 
 router = Blueprint("actions", __name__)
 
 
 @router.route("/actions", methods=["GET"])
 def get_actions():
-    fetch_recent = request.args.get("recent", False)
-    interval = request.args.get("interval", 15)
-    query = {}
-    if fetch_recent:
-        time_threshold = datetime.now(timezone.utc) - timedelta(seconds=interval)
-        query = {"timestamp": {"$gte": time_threshold}}
-    actions = list(mongo.db.actions.find(query).sort("timestamp", -1))
-    actions = ActionSchema(many=True).dump(actions)
-    return jsonify(actions), 200
+    try:
+        query_args = ActionQuerySchema().load(request.args)
+
+        query = {}
+        if query_args.get("recent", False):
+            time_threshold = datetime.now(timezone.utc) - timedelta(
+                seconds=query_args["interval"]
+            )
+            query = {"timestamp": {"$gte": time_threshold}}
+
+        actions = list(mongo.db.actions.find(query).sort("timestamp", -1))
+        actions = ActionSchema(many=True).dump(actions)
+        return jsonify(actions), 200
+
+    except ValidationError as err:
+        return jsonify(
+            {"error": "Invalid query parameters", "details": err.messages}
+        ), 400
 
 
 @router.route("/github-webhook", methods=["POST"])
