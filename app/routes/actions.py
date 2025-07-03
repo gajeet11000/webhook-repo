@@ -23,7 +23,7 @@ def get_actions():
         query = {}
         if query_args.get("recent", False):
             time_threshold = datetime.now(timezone.utc) - timedelta(
-                seconds=query_args["interval"]
+                seconds=query_args["interval"] + 1
             )
             query = {"timestamp": {"$gte": time_threshold}}
 

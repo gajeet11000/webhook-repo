@@ -1,0 +1,913 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>GitHub Actions Dashboard</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      href="https://fonts.googleapis.com/icon?family=Material+Icons"
+      rel="stylesheet"
+    />
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: "Roboto", sans-serif;
+        background: linear-gradient(135deg, #1a2980, #26d0ce);
+        background-size: 400% 400%;
+        animation: gradientBG 15s ease infinite;
+        min-height: 100vh;
+        padding: 20px;
+      }
+
+      @keyframes gradientBG {
+        0% {
+          background-position: 0% 50%;
+        }
+        50% {
+          background-position: 100% 50%;
+        }
+        100% {
+          background-position: 0% 50%;
+        }
+      }
+
+      .container {
+        max-width: 1200px;
+        margin: 0 auto;
+        background: rgba(255, 255, 255, 0.97);
+        border-radius: 16px;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+        overflow: hidden;
+        animation: slideUp 0.6s ease-out;
+      }
+
+      @keyframes slideUp {
+        from {
+          opacity: 0;
+          transform: translateY(30px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      .header {
+        background: linear-gradient(135deg, #2196f3 0%, #1976d2 100%);
+        color: white;
+        padding: 24px 32px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 16px;
+      }
+
+      .header h1 {
+        font-size: 28px;
+        font-weight: 500;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+
+      .controls {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        flex-wrap: wrap;
+      }
+
+      .input-group {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        background: rgba(255, 255, 255, 0.1);
+        padding: 8px 16px;
+        border-radius: 24px;
+        backdrop-filter: blur(10px);
+      }
+
+      .input-group label {
+        font-size: 14px;
+        font-weight: 500;
+      }
+
+      .input-group input {
+        background: rgba(255, 255, 255, 0.2);
+        border: none;
+        padding: 8px 12px;
+        border-radius: 20px;
+        color: white;
+        width: 80px;
+        text-align: center;
+        font-size: 14px;
+      }
+
+      .input-group input::placeholder {
+        color: rgba(255, 255, 255, 0.7);
+      }
+
+      .status-indicator {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        background: rgba(255, 255, 255, 0.1);
+        padding: 8px 16px;
+        border-radius: 24px;
+        backdrop-filter: blur(10px);
+      }
+
+      .status-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: #4caf50;
+        animation: pulse 2s infinite;
+      }
+
+      @keyframes pulse {
+        0%,
+        100% {
+          opacity: 1;
+        }
+        50% {
+          opacity: 0.5;
+        }
+      }
+
+      .content {
+        padding: 32px;
+      }
+
+      .stats {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 20px;
+        margin-bottom: 32px;
+      }
+
+      .stat-card {
+        background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        padding: 20px;
+        border-radius: 12px;
+        text-align: center;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+      }
+
+      .stat-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+      }
+
+      .stat-card .number {
+        font-size: 32px;
+        font-weight: 700;
+        color: #1976d2;
+        margin-bottom: 8px;
+      }
+
+      .stat-card .label {
+        font-size: 14px;
+        color: #666;
+        font-weight: 500;
+      }
+
+      .table-container {
+        background: white;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        border: 1px solid #e9ecef;
+      }
+
+      .table-header {
+        background: #f8f9fa;
+        padding: 16px 24px;
+        border-bottom: 1px solid #e9ecef;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      .table-header h2 {
+        font-size: 20px;
+        font-weight: 500;
+        color: #333;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+
+      thead {
+        background: #f8f9fa;
+      }
+
+      th {
+        padding: 16px 24px;
+        text-align: left;
+        font-weight: 500;
+        color: #666;
+        font-size: 14px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        border-bottom: 2px solid #dee2e6;
+      }
+
+      tbody tr {
+        border-bottom: 1px solid #f0f0f0;
+        transition: all 0.3s ease;
+        animation: fadeIn 0.5s ease-out;
+      }
+
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+          transform: translateX(-20px);
+        }
+        to {
+          opacity: 1;
+          transform: translateX(0);
+        }
+      }
+
+      tbody tr:hover {
+        background: #f8f9fa;
+        transform: scale(1.01) translateY(-2px);
+        box-shadow: 0 6px 15px rgba(0, 0, 0, 0.05);
+        z-index: 5;
+      }
+
+      td {
+        padding: 16px 24px;
+        font-size: 14px;
+        color: #333;
+      }
+
+      .event-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: white;
+      }
+
+      .event-push {
+        background: #ff6b6b;
+      }
+
+      .event-pr-open {
+        background: #1dd1a1;
+      }
+
+      .event-pr-closed {
+        background: #9b59b6;
+      }
+
+      .event-pr-merged {
+        background: #3498db;
+      }
+
+      .username {
+        font-weight: 500;
+        color: #1976d2;
+      }
+
+      .branch {
+        font-family: "Courier New", monospace;
+        background: #f5f5f5;
+        padding: 2px 6px;
+        border-radius: 4px;
+        font-size: 12px;
+        color: #e74c3c;
+      }
+
+      .timestamp {
+        color: #666;
+        font-size: 12px;
+      }
+
+      .loading {
+        text-align: center;
+        padding: 40px;
+        color: #666;
+      }
+
+      .loading .spinner {
+        width: 40px;
+        height: 40px;
+        border: 4px solid #f3f3f3;
+        border-top: 4px solid #2196f3;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        margin: 0 auto 16px;
+      }
+
+      @keyframes spin {
+        0% {
+          transform: rotate(0deg);
+        }
+        100% {
+          transform: rotate(360deg);
+        }
+      }
+
+      .empty-state {
+        text-align: center;
+        padding: 60px 20px;
+        color: #666;
+      }
+
+      .empty-state .material-icons {
+        font-size: 64px;
+        color: #ddd;
+        margin-bottom: 16px;
+      }
+
+      @keyframes highlightNewRow {
+        0% {
+          background-color: rgba(29, 209, 161, 0.1);
+          transform: translateY(-20px);
+          opacity: 0;
+        }
+        50% {
+          background-color: rgba(29, 209, 161, 0.3);
+        }
+        100% {
+          background-color: transparent;
+          transform: translateY(0);
+          opacity: 1;
+        }
+      }
+
+      @keyframes pushDown {
+        0% {
+          transform: translateY(0);
+        }
+        50% {
+          transform: translateY(10px);
+        }
+        100% {
+          transform: translateY(0);
+        }
+      }
+
+      .new-row {
+        animation: highlightNewRow 1.5s ease-out;
+        position: relative;
+        z-index: 10;
+      }
+
+      .table-update {
+        animation: pushDown 0.5s ease-out;
+      }
+
+      .notification {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        padding: 15px 25px;
+        border-radius: 8px;
+        background: white;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        z-index: 1000;
+        transform: translateX(150%);
+        transition: transform 0.3s ease;
+      }
+
+      .notification.show {
+        transform: translateX(0);
+      }
+
+      .notification.success {
+        border-left: 4px solid #1dd1a1;
+      }
+
+      .notification.warning {
+        border-left: 4px solid #f39c12;
+      }
+
+      .notification.info {
+        border-left: 4px solid #3498db;
+      }
+
+      .notification.error {
+        border-left: 4px solid #e74c3c;
+      }
+
+      .notification .material-icons {
+        font-size: 24px;
+      }
+
+      .notification.success .material-icons {
+        color: #1dd1a1;
+      }
+
+      .notification.warning .material-icons {
+        color: #f39c12;
+      }
+
+      .notification.info .material-icons {
+        color: #3498db;
+      }
+
+      .notification.error .material-icons {
+        color: #e74c3c;
+      }
+
+      .btn {
+        background: #3498db;
+        color: white;
+        border: none;
+        padding: 8px 16px;
+        border-radius: 4px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 14px;
+        transition: background 0.3s ease;
+      }
+
+      .btn:hover {
+        background: #2980b9;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+      }
+
+      .btn .material-icons {
+        font-size: 18px;
+      }
+
+      @media (max-width: 768px) {
+        .container {
+          margin: 10px;
+          border-radius: 12px;
+        }
+
+        .header {
+          padding: 20px;
+          flex-direction: column;
+          text-align: center;
+        }
+
+        .content {
+          padding: 20px;
+        }
+
+        .stats {
+          grid-template-columns: 1fr;
+        }
+
+        table {
+          font-size: 12px;
+        }
+
+        th,
+        td {
+          padding: 12px 16px;
+        }
+
+        .controls {
+          justify-content: center;
+        }
+
+        .notification {
+          width: calc(100% - 40px);
+          right: 20px;
+          left: 20px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">
+        <h1>
+          <span class="material-icons">timeline</span>
+          GitHub Actions Dashboard
+        </h1>
+        <div class="controls">
+          <div class="input-group">
+            <label for="interval">Refresh:</label>
+            <input type="number" id="interval" value="15" min="5" max="300" />
+            <span>seconds</span>
+          </div>
+          <div class="status-indicator">
+            <div class="status-dot"></div>
+            <span id="status">Connected</span>
+          </div>
+        </div>
+      </div>
+      <div class="content">
+        <div class="stat-card" style="margin-bottom: 32px">
+          <div class="number" id="last-update">Never</div>
+          <div class="label">Last Update</div>
+        </div>
+
+        <div class="table-container">
+          <div class="table-header">
+            <h2>
+              <span class="material-icons">list</span>
+              Recent Actions
+            </h2>
+          </div>
+          <div id="table-content">
+            <div class="loading">
+              <div class="spinner"></div>
+              <div>Loading actions...</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="notification" id="notification">
+      <span class="material-icons">info</span>
+      <span id="notification-message"></span>
+    </div>
+
+    <script>
+      class GitHubActionsDashboard {
+        constructor() {
+          this.apiBaseUrl =
+            "https://webhook-repo-eion.onrender.com/api/actions";
+          this.interval = 15; // seconds
+          this.intervalId = null;
+          this.actions = [];
+          this.allActions = [];
+          this.isLoading = false;
+          this.lastFetchedId = null;
+          this.hasReceivedData = false;
+          this.noDataCallsCount = 0;
+          this.MAX_NO_DATA_CALLS = 2;
+          this.init();
+        }
+
+        init() {
+          this.setupEventListeners();
+          document.getElementById("interval").value = this.interval;
+          this.startAutoRefresh();
+          this.showNotification(
+            "Dashboard initialized. Waiting for new actions...",
+            "info"
+          );
+        }
+
+        setupEventListeners() {
+          const intervalInput = document.getElementById("interval");
+          intervalInput.addEventListener("change", (e) => {
+            this.interval = parseInt(e.target.value) || 15;
+            this.restartAutoRefresh();
+            this.showNotification(
+              `Refresh interval set to ${this.interval} seconds`,
+              "info"
+            );
+          });
+        }
+
+        async loadRecentData() {
+          if (this.isLoading) return;
+          this.setLoading(true);
+
+          try {
+            const url = `${this.apiBaseUrl}?recent=true&interval=${this.interval}`;
+            const response = await fetch(url);
+
+            if (!response.ok) {
+              const errorText = await response.text();
+              throw new Error(
+                `Server returned ${response.status}: ${errorText}`
+              );
+            }
+
+            const recentData = await response.json();
+
+            // Always clear previous data
+            this.allActions = [];
+            this.actions = [];
+
+            if (!Array.isArray(recentData)) {
+              throw new Error("Invalid data format: Expected array");
+            }
+
+            if (recentData.length === 0) {
+              this.hasReceivedData = false;
+              this.lastFetchedId = null;
+              this.showLoader();
+              this.updateStatus("Connected");
+              this.updateLastUpdateTime();
+              this.setLoading(false);
+              return;
+            }
+
+            // If data is present, process and show it
+            const processedActions = recentData.map((action) => ({
+              ...action,
+              isNew: true,
+            }));
+            this.allActions = processedActions;
+            this.actions = processedActions;
+            this.hasReceivedData = true;
+
+            const maxId = Math.max(
+              ...recentData.map((action) => parseInt(action._id || action.id))
+            );
+            this.lastFetchedId = maxId;
+
+            this.renderTable();
+            this.showNotification(
+              `Showing ${recentData.length} recent actions`,
+              "success"
+            );
+            this.updateStatus("Connected");
+            this.updateLastUpdateTime();
+          } catch (error) {
+            console.error("Error loading recent data:", error);
+            this.updateStatus("Error");
+            this.showNotification(`Error: ${error.message}", "error`);
+          } finally {
+            this.setLoading(false);
+          }
+        }
+
+        showLoader() {
+          const tableContent = document.getElementById("table-content");
+          tableContent.innerHTML = `
+            <div class="loading">
+              <div class="spinner"></div>
+              <div>Loading actions...</div>
+            </div>
+          `;
+        }
+
+        formatAction(action) {
+          if (!action || !action.event) return null;
+
+          const username = action.username
+            ? `<span class="username">${action.username}</span>`
+            : "Unknown user";
+          const timestamp = action.timestamp
+            ? `<span class="timestamp">${action.timestamp}</span>`
+            : "";
+
+          if (action.event === "push") {
+            const branch = action.branch
+              ? `<span class="branch">${action.branch}</span>`
+              : "unknown branch";
+            return {
+              type: "push",
+              description: `${username} pushed to ${branch}`,
+              timestamp: timestamp,
+              event: "Push",
+            };
+          } else if (action.event === "pull_request") {
+            const headBranch = action.head_branch
+              ? `<span class="branch">${action.head_branch}</span>`
+              : "unknown";
+            const baseBranch = action.base_branch
+              ? `<span class="branch">${action.base_branch}</span>`
+              : "unknown";
+
+            if (action.action === "opened") {
+              return {
+                type: "pr-open",
+                description: `${username} opened PR from ${headBranch} to ${baseBranch}`,
+                timestamp: timestamp,
+                event: "PR Opened",
+              };
+            } else if (action.action === "closed") {
+              if (action.is_merged) {
+                return {
+                  type: "pr-merged",
+                  description: `${username} merged ${headBranch} to ${baseBranch}`,
+                  timestamp: timestamp,
+                  event: "PR Merged",
+                };
+              } else {
+                return {
+                  type: "pr-closed",
+                  description: `${username} closed PR from ${headBranch}`,
+                  timestamp: timestamp,
+                  event: "PR Closed",
+                };
+              }
+            }
+          }
+
+          // Default for unrecognized actions
+          return {
+            type: "unknown",
+            description: `${username} performed ${action.event} action`,
+            timestamp: timestamp,
+            event: action.event,
+          };
+        }
+
+        getEventIcon(type) {
+          switch (type) {
+            case "push":
+              return '<span class="material-icons" style="font-size: 14px;">publish</span>';
+            case "pr-open":
+              return '<span class="material-icons" style="font-size: 14px;">call_split</span>';
+            case "pr-closed":
+            case "pr-merged":
+              return '<span class="material-icons" style="font-size: 14px;">merge_type</span>';
+            default:
+              return '<span class="material-icons" style="font-size: 14px;">code</span>';
+          }
+        }
+
+        renderTable() {
+          const tableContent = document.getElementById("table-content");
+
+          if (
+            this.noDataCallsCount >= this.MAX_NO_DATA_CALLS &&
+            this.allActions.length === 0
+          ) {
+            return this.showLoader();
+          }
+
+          if (this.allActions.length === 0) {
+            return (tableContent.innerHTML = `
+              <div class="empty-state">
+                <div class="material-icons">inbox</div>
+                <h3>No actions found</h3>
+                <p>Waiting for GitHub events...</p>
+              </div>
+            `);
+          }
+
+          const formattedActions = this.allActions
+            .map((action) => this.formatAction(action))
+            .filter((action) => action !== null);
+
+          const tableHTML = `
+            <table>
+              <thead>
+                <tr>
+                  <th>Event Type</th>
+                  <th>Description</th>
+                  <th>Timestamp</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${formattedActions
+                  .map(
+                    (action) => `
+                  <tr class="${action.isNew ? "new-row" : ""}">
+                    <td>
+                      <span class="event-badge event-${action.type}">
+                        ${this.getEventIcon(action.type)}
+                        ${action.event}
+                      </span>
+                    </td>
+                    <td>${action.description}</td>
+                    <td>${action.timestamp}</td>
+                  </tr>
+                `
+                  )
+                  .join("")}
+              </tbody>
+            </table>
+          `;
+
+          tableContent.innerHTML = tableHTML;
+        }
+
+        updateStats() {
+          // Use allActions for stats to show cumulative totals
+          const totalActions = this.allActions.length;
+          const pushCount = this.allActions.filter(
+            (action) => action.event === "push"
+          ).length;
+          const prCount = this.allActions.filter(
+            (action) => action.event === "pull_request"
+          ).length;
+
+          document.getElementById("total-actions").textContent = totalActions;
+          document.getElementById("push-count").textContent = pushCount;
+          document.getElementById("pr-count").textContent = prCount;
+        }
+
+        updateLastUpdateTime() {
+          const now = new Date();
+          const timeString = now.toLocaleTimeString();
+          document.getElementById("last-update").textContent = timeString;
+        }
+
+        updateStatus(status) {
+          document.getElementById("status").textContent = status;
+          const statusDot = document.querySelector(".status-dot");
+
+          switch (status) {
+            case "Connected":
+              statusDot.style.background = "#1dd1a1";
+              break;
+            case "Disconnected":
+            case "Error":
+              statusDot.style.background = "#e74c3c";
+              break;
+            default:
+              statusDot.style.background = "#f39c12";
+          }
+        }
+
+        setLoading(loading) {
+          this.isLoading = loading;
+          const btn = document.getElementById("refresh-btn");
+          if (btn) {
+            btn.disabled = loading;
+            if (loading) {
+              btn.innerHTML =
+                '<span class="material-icons">hourglass_top</span> Refreshing...';
+            } else {
+              btn.innerHTML =
+                '<span class="material-icons">refresh</span> Refresh Now';
+            }
+          }
+        }
+
+        startAutoRefresh() {
+          this.intervalId = setInterval(() => {
+            this.loadRecentData();
+          }, this.interval * 1000);
+        }
+
+        restartAutoRefresh() {
+          if (this.intervalId) {
+            clearInterval(this.intervalId);
+          }
+          this.startAutoRefresh();
+        }
+
+        showNotification(message, type = "info") {
+          const notification = document.getElementById("notification");
+          const messageElement = document.getElementById(
+            "notification-message"
+          );
+
+          if (!notification || !messageElement) return;
+
+          // Update notification content
+          messageElement.textContent = message;
+          notification.className = `notification ${type} show`;
+
+          // Remove existing type classes
+          notification.classList.remove("success", "warning", "error", "info");
+          notification.classList.add(type, "show");
+
+          // Set icon based on type
+          let icon = "info";
+          switch (type) {
+            case "success":
+              icon = "check_circle";
+              break;
+            case "warning":
+              icon = "warning";
+              break;
+            case "error":
+              icon = "error";
+              break;
+            default:
+              icon = "info";
+          }
+
+          notification.querySelector(".material-icons").textContent = icon;
+
+          // Auto-hide after 3 seconds
+          setTimeout(() => {
+            notification.classList.remove("show");
+          }, 3000);
+        }
+      }
+
+      // Initialize the dashboard when the page loads
+      document.addEventListener("DOMContentLoaded", () => {
+        window.dashboard = new GitHubActionsDashboard();
+      });
+    </script>
+  </body>
+</html>
