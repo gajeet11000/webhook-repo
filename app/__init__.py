@@ -12,17 +12,11 @@ mongo = PyMongo()
 
 def create_app():
     app = Flask(__name__)
-    origins_allowed = (
-        [
-            os.getenv("FRONTEND_URL"),
-        ]
-        + [
-            "null",
-            "http://localhost:3000",
-        ]
-        if os.getenv("DEBUG")
-        else [],
-    )
+    origins_allowed = []
+    if os.getenv("DEBUG"):
+        origins_allowed.extend(["null", "http://localhost:3000"])
+    else:
+        origins_allowed.extend([os.getenv("FRONTEND_URL")])
 
     CORS(
         app,
