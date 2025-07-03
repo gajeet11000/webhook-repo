@@ -11,12 +11,13 @@ router = Blueprint("actions", __name__)
 
 @router.route("/actions", methods=["GET"])
 def get_actions():
-    time_threshold = datetime.now(timezone.utc) - timedelta(seconds=15)
-    actions = list(
-        mongo.db.actions.find({"timestamp": {"$gte": time_threshold}}).sort(
-            "timestamp", -1
-        )
-    )
+    fetch_recent = request.args.get("recent", False)
+    interval = request.args.get("interval", 15)
+    query = {}
+    if fetch_recent:
+        time_threshold = datetime.now(timezone.utc) - timedelta(seconds=interval)
+        query = {"timestamp": {"$gte": time_threshold}}
+    actions = list(mongo.db.actions.find(query).sort("timestamp", -1))
     actions = ActionSchema(many=True).dump(actions)
     return jsonify(actions), 200
 
