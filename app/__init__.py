@@ -14,7 +14,7 @@ def create_app():
     app = Flask(__name__)
     origins_allowed = (
         [
-            "https://your-production-domain.com",
+            os.getenv("FRONTEND_URL"),
         ]
         + [
             "null",
