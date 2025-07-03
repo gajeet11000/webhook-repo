@@ -12,11 +12,20 @@ mongo = PyMongo()
 
 def create_app():
     app = Flask(__name__)
-    origins_allowed = []
-    if os.getenv("DEBUG"):
-        origins_allowed.extend(["null", "http://localhost:3000"])
+
+    if os.getenv("DEBUG", "").lower() in ("true", "1", "t"):
+        origins_allowed = [
+            # "*",
+            "http://localhost:3000",
+            "http://127.0.0.1:3000",
+        ]
     else:
-        origins_allowed.extend([os.getenv("FRONTEND_URL")])
+        frontend_url = os.getenv("FRONTEND_URL")
+        if not frontend_url:
+            raise ValueError(
+                "FRONTEND_URL environment variable must be set in production"
+            )
+        origins_allowed = [frontend_url]
 
     CORS(
         app,
@@ -24,8 +33,14 @@ def create_app():
             r"/api/actions": {
                 "origins": origins_allowed,
                 "methods": ["GET", "OPTIONS"],
+                "allow_headers": ["Content-Type", "Authorization"],
+                "supports_credentials": True,
+                "max_age": 86400,
             }
         },
+        origins=origins_allowed,
+        supports_credentials=True,
+        send_wildcard=False,
     )
 
     app.config["MONGO_URI"] = os.getenv("MONGO_URI")
