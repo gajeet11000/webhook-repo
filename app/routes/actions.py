@@ -1,11 +1,16 @@
 from datetime import datetime, timedelta, timezone
+from http import HTTPStatus
 
 from flask import Blueprint, jsonify, request
+from marshmallow import ValidationError
 
 from app import mongo
-from app.schemas.actions import ActionSchema, ActionQuerySchema
+from app.schemas.actions import (
+    ActionQuerySchema,
+    ActionSchema,
+    GitHubWebhookHeadersSchema,
+)
 from app.utils import GithubWebhookExtractor
-from marshmallow import ValidationError
 
 router = Blueprint("actions", __name__)
 
@@ -24,33 +29,53 @@ def get_actions():
 
         actions = list(mongo.db.actions.find(query).sort("timestamp", -1))
         actions = ActionSchema(many=True).dump(actions)
-        return jsonify(actions), 200
+        return jsonify(actions), HTTPStatus.OK
 
     except ValidationError as err:
         return jsonify(
             {"error": "Invalid query parameters", "details": err.messages}
-        ), 400
+        ), HTTPStatus.BAD_REQUEST
 
 
 @router.route("/github-webhook", methods=["POST"])
 def handle_webhook_data():
-    payload = request.get_json()
-    event = request.headers.get("X-GitHub-Event")
-    data = GithubWebhookExtractor.get_PR_data(event, payload)
-
-    if data.get("action") == "closed" and not data.get("is_merged", False):
-        return jsonify({"message": "PR closed but not merged"})
-
-    data.update({"event": event})
-
-    if event == "push":
-        data.update(
+    try:
+        header_schema = GitHubWebhookHeadersSchema(raw_body=request.data)
+        header_schema.load(
             {
-                "action": "push",
+                "X-Hub-Signature-256": request.headers.get("X-Hub-Signature-256"),
+                "X-GitHub-Event": request.headers.get("X-GitHub-Event"),
+                "X-GitHub-Delivery": request.headers.get("X-GitHub-Delivery"),
             }
         )
+        payload = request.get_json()
+        event = request.headers.get("X-GitHub-Event")
+        data = GithubWebhookExtractor.get_PR_data(event, payload)
 
-    result = mongo.db.actions.insert_one(data)
-    new_event = mongo.db.actions.find_one({"_id": result.inserted_id})
+        if data.get("action") == "closed" and not data.get("is_merged", False):
+            return jsonify({"message": "PR closed but not merged"})
 
-    return jsonify({"message": "Data saved", "data": ActionSchema().dump(new_event)})
+        data.update({"event": event})
+
+        if event == "push":
+            data.update(
+                {
+                    "action": "push",
+                }
+            )
+
+        result = mongo.db.actions.insert_one(data)
+        new_event = mongo.db.actions.find_one({"_id": result.inserted_id})
+
+        return jsonify(
+            {"message": "Data saved", "data": ActionSchema().dump(new_event)}
+        )
+    except ValidationError as e:
+        return jsonify(
+            {"status": "error", "message": e.messages, "error_type": "validation_error"}
+        ), e.kwargs.get("status_code", HTTPStatus.BAD_REQUEST)
+
+    except Exception as e:
+        return jsonify(
+            {"status": "error", "message": str(e), "error_type": "server_error"}
+        ), HTTPStatus.INTERNAL_SERVER_ERROR
